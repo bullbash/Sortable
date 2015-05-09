@@ -5,24 +5,27 @@ import main.*;
 import java.io.*;
 import java.util.*;
 import javax.swing.*;
+import java.awt.*;
+import java.awt.image.BufferedImage;
 
 
 public class Worker extends Thread{
-    ArrayList<String> productsNames     = null;
-    ArrayList<String> listingsNames     = null;
+    ArrayList<String> productsNames      = null;
+    ArrayList<String> listingsNames      = null;
     
-    ArrayList<int[]>  digitizedProducts = null;
-    ArrayList<int[]>  digitizedListings = null;
-    PrintWriter       out               = null;
-    JProgressBar      progressBar       = null;       
-    JLabel            productLabel      = null;
-    JLabel            etaLabel          = null;
-    long              startTime         = 0;
+    ArrayList<int[]>  digitizedProducts  = null;
+    ArrayList<int[]>  digitizedListings  = null;
+    PrintWriter       out                = null;
+    JProgressBar      progressBar        = null;       
+    JLabel            productLabel       = null;
+    JLabel            etaLabel           = null;
+    long              startTime          = 0;
     
-    JButton           startButton       = null;
-    JButton           stopButton        = null;
+    JButton           startButton        = null;
+    JButton           stopButton         = null;
     
-    boolean           flagStop          = false;
+    boolean           flagStop           = false;
+    int[]             metricDistribution = null;
     
                         // ================== constructor ======================
     public Worker(JButton sButton, JButton stButton, JLabel pLabel, JProgressBar pBar, JLabel eLabel){
@@ -35,13 +38,12 @@ public class Worker extends Thread{
         listingsNames     = new ArrayList();
         digitizedProducts = new ArrayList();
         digitizedListings = new ArrayList();
-//        Globals.patterns          = Helpers.getCombos(4, 3, 3); // frag size (-1), frag number, max gap size (-1)
-//        patterns          = Helpers.getCombos(4, 3, 3); // frag size (-1), frag number, max gap size (-1)
         System.out.println("Max comparable substring length is : "+Globals.patterns[0].size);
         try{
             out = new PrintWriter(new BufferedWriter(new FileWriter(Globals.resultsFileName+"_"+Globals.dendriteSize+""+Globals.dendriteNumber+""+Globals.dendriteSpreads+"_"+Globals.patterns[0].size+".txt", false)));
             out.println("dendrite Size = "+Globals.dendriteSize+", dendrites Number = "+Globals.dendriteNumber+", dendrites Spread = "+Globals.dendriteSpreads);
             out.println("Max Neuron Size = "+Globals.patterns[0].size+", Neuron Types = "+Globals.patterns.length);
+            out.println("Listing line format : \"similarity metric\":int , \"original index in listings file\":int , \"title\":String");
         }
         catch(Exception e){
             System.out.println("Worker.constructor : "+e);
@@ -57,10 +59,16 @@ public class Worker extends Thread{
         progressBar.setMaximum(digitizedListings.size());
         startButton.setVisible(false);
         stopButton.setVisible(true);
-        startTime = System.currentTimeMillis();
+        Globals.distributionImage = null;
+        Globals.imagePanel.repaint();
         for(int i = 0; i < digitizedProducts.size(); i++){
+            startTime = System.currentTimeMillis();
             printProduct(i);
-            TreeMap<Integer, Integer>    sortedView    = new TreeMap<Integer, Integer>(Collections.reverseOrder());
+            TreeMap<Integer, Integer>    sortedView         = new TreeMap<Integer, Integer>(Collections.reverseOrder());
+            
+            int  maxMetric          = 0;
+                 metricDistribution = new int[Globals.patterns.length];
+            
             for(int j = 0; j < digitizedListings.size(); j++){
                 if(j > 0 && j % 10 == 0){
                     progressBar.setValue(j);
@@ -74,19 +82,25 @@ public class Worker extends Thread{
                     etaLabel.setText("Elapsed "+elapMin+":"+elapSec+", ETA in "+toGoMin+":"+toGoSec);
                 }
                 
-                int metric = getMetric(i, j);
-                while(sortedView.containsKey(metric)){ // that is a hack, better key control will make it slower
+                int metric = getMetric(i, j) * 100;     // by multiplying by 100, we make a busket size 100 for similar metric units
+                                                        // with no control yet over busket overfilling
+                while(sortedView.containsKey(metric)){  // that is a hack, better key control will make it slower
                     metric--;
                 }
-                sortedView.put(metric, j);
+                sortedView.put(metric, j);              // sorted metrics container to investigate cut off parameters
                 if(flagStop) break;
             }
+            if(flagStop) break;
+            
+            prepareShowDistributionImage(metricDistribution );
+            
+            int outputCounter = 0;
             for(Integer metric : sortedView.keySet()) {
                 int   listingIndex = sortedView.get(metric);
                 printListing(metric, listingIndex);
+                if(outputCounter++ > Globals.outputListingsNumber) break;
             }
-            if(flagStop) break;
-//if(i == 0) break;
+            out.flush();
         }
         out.close();
         startButton.setVisible(true);
@@ -157,7 +171,6 @@ public class Worker extends Thread{
         int[] listing = (int[])digitizedListings.get(jj);
         int metric = 0;
         for(int i = 0; i < Globals.patterns.length; i++){
-if(i >= 2000) break;
             int[] pattern = Globals.patterns[i].pattern;
             
             for(int j = 0; j < product.length; j++){
@@ -199,6 +212,7 @@ if(i >= 2000) break;
 //        metric = metric / listing.length;
                 }
             }
+            metricDistribution[i] += metric;         // to investigate value of neurons of different sizes, metric is a similarity measure
         }
 //        metric = metric / listing.length;
         return metric;
@@ -206,15 +220,34 @@ if(i >= 2000) break;
                             // ============= printProduct ======================
     void printProduct(int ii){
         String productName = productsNames.get(ii);
-        out.println(productName);
+        out.println("\n"+productName);
         productLabel.setText("#"+ii+" : "+productName);
     }
                             // ============= printListing ======================
     void printListing(int metric, int ii){
-        out.println("    "+metric+" : "+listingsNames.get(ii));
+        String listingIndex = String.format("%6d", ii);
+        out.println("    \""+metric+"\", \""+listingIndex+"\", \""+listingsNames.get(ii)+"\"");
     }
                             // ============== stopWorker =======================
     public void stopWorker(){
         flagStop = true;
+    }
+                            // ============ prepareShowDistributionImage =======
+    void prepareShowDistributionImage(int[] distributionArray){
+        int maxMetric = 0;
+        for(int i = 0; i < distributionArray.length; i++){
+            if(distributionArray[i] > maxMetric) maxMetric = distributionArray[i];
+        }
+        Globals.distributionImage = new BufferedImage(distributionArray.length, Globals.imagePanelHeight, BufferedImage.TYPE_INT_RGB);
+        Graphics g = Globals.distributionImage.getGraphics();
+        g.setColor(Color.black);
+        g.fillRect(0, 0, distributionArray.length, maxMetric);
+        g.setColor(Color.blue);
+        for(int i = 0; i < distributionArray.length; i++){
+            int lineHeight = distributionArray[i] * Globals.imagePanelHeight / maxMetric;  
+            g.drawLine(i, Globals.imagePanelHeight, i, Globals.imagePanelHeight - lineHeight);
+        }
+        g.dispose();
+        Globals.imagePanel.repaint();
     }
 }
