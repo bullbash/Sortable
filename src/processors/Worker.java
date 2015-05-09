@@ -86,7 +86,7 @@ public class Worker extends Thread{
                 printListing(metric, listingIndex);
             }
             if(flagStop) break;
-if(i == 0) break;
+//if(i == 0) break;
         }
         out.close();
         startButton.setVisible(true);
@@ -157,6 +157,7 @@ if(i == 0) break;
         int[] listing = (int[])digitizedListings.get(jj);
         int metric = 0;
         for(int i = 0; i < Globals.patterns.length; i++){
+if(i >= 2000) break;
             int[] pattern = Globals.patterns[i].pattern;
             
             for(int j = 0; j < product.length; j++){
