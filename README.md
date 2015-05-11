@@ -5,9 +5,9 @@ Here is a suggested solution for the Sortable.com coding challenge:
 I employ a Java implementation of simplified *perceptron* with single layer of receptors.
 The idea is to create a set of those receptors (and such to define the neural network topology) 
 by using the UI parameters: 
-"Dendrite Size" - maximum number of consecutive symbols *felt* by a single neuron's dendrite
-"Dendrites Number" - a number of dendrites of a neuron (a number of symbols' sequences) contributing to a neuron excitement
-"Dendrites Spread" - a max number of symbols apart between a neuron dendrtites
+<br>"Dendrite Size" - maximum number of consecutive symbols *felt* by a single neuron's dendrite
+<br>"Dendrites Number" - a number of dendrites of a neuron (a number of symbols' sequences) contributing to a neuron excitement
+<br>"Dendrites Spread" - a max number of symbols apart between a neuron dendrtites
 Note: it all could be described without fancy NN terminology - in terms of just symbols sequences.
 
 Button "Start" starts the comparison of a *Product Name* to each *Listing name* from given files in *Home directory*.
