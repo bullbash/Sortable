@@ -20,8 +20,8 @@ I make no assumption on the nature of studied sequences - could be string of any
 market behavior, digitized sounds and such.
 
 Test runs showed:
-There is a general tendency to increase classification *precision* by increasing the NN topology complexity, with
-increase of processing time.
+More complex NN topologies result in increased classification precision with greater processing times.
+To optimize one must know acceptable precision/computational price levels.
 
 The resulting file in *Home directory* is results[topology].txt file. I slightly changed requested output format to
 better illustrate *similarity metric*  relevancy of different NN topologies and reduce the output file size.
