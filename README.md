@@ -27,3 +27,5 @@ The resulting file in *Home directory* is results[topology].txt file. I slightly
 better illustrate *similarity metric*  relevancy of different NN topologies and reduce the output file size.
 
 Could be a start for further improvements.
+
+Presented is a NetBeans8 project with main class: main.Main class and no parameters to run.
