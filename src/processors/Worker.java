@@ -66,7 +66,9 @@ public class Worker extends Thread{
         for(int i = 0; i < digitizedProducts.size(); i++){
             startTime = System.currentTimeMillis();
             TreeMap<Integer, Integer>    sortedView         = new TreeMap<Integer, Integer>(Collections.reverseOrder());
-            
+
+            productLabel.setText("#"+i+" : "+productsNames.get(i));
+
             int  maxMetric          = 0;
                  metricDistribution = new int[Globals.patterns.length];
             
@@ -228,7 +230,6 @@ public class Worker extends Thread{
 //        out.println("\n"+productName);
         out.println("{\"product_name\":"+productName+",\"listings\":[");
         
-        productLabel.setText("#"+ii+" : "+productName);
     }
                             // ============= printListing ======================
     void printListing(int metric, int ii){
@@ -240,7 +241,6 @@ public class Worker extends Thread{
     public void stopWorker(){
         flagStop = true;
     }
-                            // ============ prepareShowDistributionImage =======
     void prepareShowDistributionImage(int[] distributionArray){
         int maxMetric = 0;
         for(int i = 0; i < distributionArray.length; i++){
